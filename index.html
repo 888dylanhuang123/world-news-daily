@@ -151,6 +151,7 @@
     <div class="footer">内容由自动抓取程序更新 · 每天 7:30 微信提醒</div>
   </div>
 
+  <script src="data/news.js"></script>
   <script>
     const CATS = [
       { k: 'all', v: '全部' },
@@ -212,9 +213,14 @@
 
     async function load() {
       try {
-        const res = await fetch('data/news.json?ts=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
+        let data;
+        if (window.__NEWS_DATA__) {
+          data = window.__NEWS_DATA__;
+        } else {
+          const res = await fetch('data/news.json?ts=' + Date.now(), { cache: 'no-store' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          data = await res.json();
+        }
         items = Array.isArray(data) ? data : (data.items || []);
         meta = Array.isArray(data) ? null : data.meta;
         $('metaLine').textContent = meta && meta.lastUpdated
