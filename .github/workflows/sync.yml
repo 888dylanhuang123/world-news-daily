@@ -19,11 +19,14 @@ jobs:
         run: |
           mkdir -p data
           curl -fsSL "https://news-digest.worldnews7k2n.workers.dev/api/news?code=WT-7K2N-2026" -o data/news.json
+          printf 'window.__NEWS_DATA__ = ' > data/news.js
+          cat data/news.json >> data/news.js
+          printf ';' >> data/news.js
 
       - name: Commit and push
         run: |
           git config user.name "news-bot"
           git config user.email "news-bot@users.noreply.github.com"
-          git add data/news.json
+          git add data/news.json data/news.js
           git diff --cached --quiet || git commit -m "Update news data"
           git push
