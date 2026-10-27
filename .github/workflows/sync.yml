@@ -3,6 +3,7 @@ name: Sync news data
 on:
   schedule:
     - cron: "5,35 * * * *"
+    - cron: "31 23 * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,19 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch latest news
-        run: |
-          mkdir -p data
-          curl -fsSL "https://news-digest.worldnews7k2n.workers.dev/api/news?code=WT-7K2N-2026" -o data/news.json
-          printf 'window.__NEWS_DATA__ = ' > data/news.js
-          cat data/news.json >> data/news.js
-          printf ';' >> data/news.js
-
-      - name: Test translation
-        run: |
-          node -e "fetch('https://api.mymemory.translated.net/get?q=hello&langpair=en%7Czh-CN&de=huangdinglin520%40gmail.com').then(async r=>{console.log('status='+r.status);console.log((await r.text()).slice(0,500))}).catch(e=>{console.error(e);process.exit(1)})"
+      - name: Fetch and translate news
+        run: node sync.mjs
 
       - name: Commit and push
+        if: github.event.schedule != '31 23 * * *'
         run: |
           git config user.name "news-bot"
           git config user.email "news-bot@users.noreply.github.com"
