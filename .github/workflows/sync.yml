@@ -2,7 +2,7 @@ name: Sync news data
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "5,35 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -22,6 +22,10 @@ jobs:
           printf 'window.__NEWS_DATA__ = ' > data/news.js
           cat data/news.json >> data/news.js
           printf ';' >> data/news.js
+
+      - name: Test translation
+        run: |
+          node -e "fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=hello').then(async r=>{console.log('status='+r.status);console.log((await r.text()).slice(0,300))}).catch(e=>{console.error(e);process.exit(1)})"
 
       - name: Commit and push
         run: |
