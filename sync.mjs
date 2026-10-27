@@ -3,27 +3,10 @@ import fs from 'node:fs';
 const WORKER = 'https://news-digest.worldnews7k2n.workers.dev';
 const CODE = 'WT-7K2N-2026';
 const EMAIL = 'huangdinglin520@gmail.com';
+const WEB = 'https://888dylanhuang123.github.io/world-news-daily/';
 const CJK = /[\u3400-\u9fff]/;
 const NOISE =
-  /(football|soccer|world cup|cricket|manchester united|grand prix|formula 1|\bf1\b|tennis|basketball|\bnba\b|premier league|champions league|mbappe|olympic|rapper|singer|actor|actress|celebrity|film|movie|netflix|music|album|concert|fashion|kardashian|oscars|grammy|royal family)/i;
-
-const LABELS = {
-  politics: '政治',
-  economy: '经贸',
-  forex: '汇率',
-  tariff: '关税',
-  energy: '能源',
-  shipping: '航运',
-};
-
-const PRIORITY = {
-  tariff: 6,
-  forex: 5,
-  shipping: 5,
-  energy: 5,
-  economy: 4,
-  politics: 2,
-};
+  /(football|soccer|world cup|cricket|manchester united|grand prix|formula 1|\bf1\b|tennis|basketball|\bnba\b|wnba|premier league|champions league|ballon d'or|mbappe|kane|olympic|rapper|singer|actor|actress|celebrity|film|movie|netflix|music|album|concert|fashion|kardashian|oscars|grammy|royal family)/i;
 
 async function translate(title) {
   if (CJK.test(title)) return title;
@@ -44,7 +27,7 @@ async function translate(title) {
   return title;
 }
 
-const newsRes = await fetch(`${WORKER}/api/news?code=${CODE}`);
+const newsRes = await fetch(WORKER + '/api/news?code=' + CODE);
 if (!newsRes.ok) throw new Error('fetch news failed: ' + newsRes.status);
 const news = await newsRes.json();
 const rawItems = Array.isArray(news) ? news : news.items || [];
@@ -64,24 +47,19 @@ fs.mkdirSync('data', { recursive: true });
 fs.writeFileSync('data/news.json', JSON.stringify(output));
 fs.writeFileSync('data/news.js', 'window.__NEWS_DATA__ = ' + JSON.stringify(output) + ';\n');
 
-if (process.env.SEND_DIGEST === 'true') {
-  const top = [...items]
-    .sort(
-      (a, b) =>
-        (PRIORITY[b.category] || 0) - (PRIORITY[a.category] || 0) ||
-        Date.parse(b.published) - Date.parse(a.published),
-    )
-    .slice(0, 12);
-  const lines = ['【国际新闻 · 早报】'];
-  top.forEach((it, i) => {
-    lines.push(`${i + 1}. [${LABELS[it.category] || '资讯'}] ${it.titleZh}`);
-    if (it.title && it.title !== it.titleZh) lines.push('   ' + it.title);
-    lines.push('   ' + it.source + ' · ' + it.link);
-  });
-  const pushRes = await fetch(`${WORKER}/api/push?code=${CODE}`, {
+let isDigest = process.env.SEND_DIGEST === 'true';
+try {
+  const event = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+  if (event.schedule === '31 23 * * *') isDigest = true;
+} catch {}
+
+if (isDigest) {
+  const content =
+    '👉 [点击打开网页版：视频 + 中英对照 + 听早报](' + WEB + ')';
+  const pushRes = await fetch(WORKER + '/api/push?code=' + CODE, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ content: lines.join('\n') }),
+    body: JSON.stringify({ content }),
   });
   console.log('digest push:', pushRes.status, await pushRes.text());
 }
