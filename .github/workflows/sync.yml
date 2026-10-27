@@ -25,7 +25,7 @@ jobs:
 
       - name: Test translation
         run: |
-          node -e "fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=hello').then(async r=>{console.log('status='+r.status);console.log((await r.text()).slice(0,300))}).catch(e=>{console.error(e);process.exit(1)})"
+          node -e "fetch('https://api.mymemory.translated.net/get?q=hello&langpair=en%7Czh-CN&de=huangdinglin520%40gmail.com').then(async r=>{console.log('status='+r.status);console.log((await r.text()).slice(0,500))}).catch(e=>{console.error(e);process.exit(1)})"
 
       - name: Commit and push
         run: |
