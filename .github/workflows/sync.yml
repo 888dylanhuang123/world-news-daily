@@ -17,6 +17,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Fetch and translate news
+        env:
+          SEND_DIGEST: ${{ github.event.schedule == '31 23 * * *' }}
         run: node sync.mjs
 
       - name: Commit and push
