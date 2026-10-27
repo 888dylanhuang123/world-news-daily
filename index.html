@@ -151,7 +151,6 @@
     <div class="footer">内容由自动抓取程序更新 · 每天 7:30 微信提醒</div>
   </div>
 
-  <script src="data/news.js"></script>
   <script>
     const CATS = [
       { k: 'all', v: '全部' },
@@ -166,6 +165,7 @@
     let current = 'all';
     let items = [];
     let meta = null;
+    const NOISE = /(football|soccer|world cup|cricket|manchester united|grand prix|formula 1|\bf1\b|tennis|basketball|\bnba\b|premier league|champions league|mbappe|olympic|rapper|singer|actor|actress|celebrity|film|movie|netflix|music|album|concert|fashion|kardashian|oscars|grammy|royal family)/i;
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -211,17 +211,30 @@
       });
     }
 
+    function loadDataScript() {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'data/news.js?v=' + Date.now();
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
     async function load() {
       try {
         let data;
-        if (window.__NEWS_DATA__) {
+        try {
+          await loadDataScript();
           data = window.__NEWS_DATA__;
-        } else {
+        } catch {}
+        if (!data) {
           const res = await fetch('data/news.json?ts=' + Date.now(), { cache: 'no-store' });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           data = await res.json();
         }
-        items = Array.isArray(data) ? data : (data.items || []);
+        const rawItems = Array.isArray(data) ? data : (data.items || []);
+        items = rawItems.filter((x) => !NOISE.test((x.title || '') + ' ' + (x.titleZh || '')));
         meta = Array.isArray(data) ? null : data.meta;
         $('metaLine').textContent = meta && meta.lastUpdated
           ? '最近更新：' + fmt(meta.lastUpdated) + ' · 共 ' + items.length + ' 条'
